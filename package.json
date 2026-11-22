@@ -1,0 +1,11 @@
+{
+  "name": "orbital-station-assembler",
+  "version": "1.0.0",
+  "description": "轨道站关卡模块生成器：接口匹配 + 全局约束求解 + 可进入三维场景验收",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "serve": "node ui/server.js",
+    "generate": "node kernel/cli.js"
+  }
+}

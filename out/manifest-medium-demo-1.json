@@ -1,0 +1,348 @@
+{
+  "format": "orbital-station-manifest/1",
+  "seed": "demo-1",
+  "spec": {
+    "entrance": "airlock",
+    "modules": {
+      "corr-straight": 3,
+      "corr-corner": 2,
+      "corr-t": 2,
+      "corr-x": 1,
+      "bay-med": 1,
+      "bay-reactor": 1,
+      "bay-hydro": 1,
+      "cap": 2
+    },
+    "targets": [
+      "medbay",
+      "reactor",
+      "hydro"
+    ],
+    "spacing": [
+      {
+        "a": "reactor",
+        "b": "medbay",
+        "min": 8
+      }
+    ],
+    "bounds": {
+      "min": {
+        "x": -30,
+        "z": -30
+      },
+      "max": {
+        "x": 30,
+        "y": 8,
+        "z": 30
+      }
+    },
+    "budget": 200000,
+    "seed": "demo-1"
+  },
+  "placements": [
+    {
+      "uid": "m1",
+      "type": "airlock",
+      "rot": 0,
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "uid": "m9",
+      "type": "corr-straight",
+      "rot": 0,
+      "pos": {
+        "x": 0.5,
+        "y": 0,
+        "z": 4
+      }
+    },
+    {
+      "uid": "m11",
+      "type": "corr-t",
+      "rot": 0,
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 10
+      }
+    },
+    {
+      "uid": "m14",
+      "type": "bay-hydro",
+      "rot": 1,
+      "pos": {
+        "x": -6,
+        "y": 0,
+        "z": 8
+      }
+    },
+    {
+      "uid": "m17",
+      "type": "corr-x",
+      "rot": 3,
+      "pos": {
+        "x": 4,
+        "y": 0,
+        "z": 10
+      }
+    },
+    {
+      "uid": "m26",
+      "type": "corr-t",
+      "rot": 1,
+      "pos": {
+        "x": 4,
+        "y": 0,
+        "z": 6
+      }
+    },
+    {
+      "uid": "m28",
+      "type": "corr-corner",
+      "rot": 0,
+      "pos": {
+        "x": 4,
+        "y": 0,
+        "z": 14
+      }
+    },
+    {
+      "uid": "m35",
+      "type": "corr-straight",
+      "rot": 2,
+      "pos": {
+        "x": 4.5,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "uid": "m1348",
+      "type": "bay-reactor",
+      "rot": 2,
+      "pos": {
+        "x": 2,
+        "y": 0,
+        "z": -8
+      }
+    },
+    {
+      "uid": "m1380",
+      "type": "corr-straight",
+      "rot": 3,
+      "pos": {
+        "x": 8,
+        "y": 0,
+        "z": 10.5
+      }
+    },
+    {
+      "uid": "m1382",
+      "type": "bay-med",
+      "rot": 3,
+      "pos": {
+        "x": 14,
+        "y": 0,
+        "z": 9
+      }
+    },
+    {
+      "uid": "m1391",
+      "type": "corr-corner",
+      "rot": 2,
+      "pos": {
+        "x": 8,
+        "y": 0,
+        "z": 14
+      }
+    },
+    {
+      "uid": "m1394",
+      "type": "cap",
+      "rot": 2,
+      "pos": {
+        "x": 8.5,
+        "y": 0,
+        "z": 18
+      }
+    },
+    {
+      "uid": "m1399",
+      "type": "cap",
+      "rot": 1,
+      "pos": {
+        "x": 8,
+        "y": 0,
+        "z": 6.5
+      }
+    }
+  ],
+  "connections": [
+    {
+      "a": {
+        "uid": "m9",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m1",
+        "ifaceId": "A"
+      }
+    },
+    {
+      "a": {
+        "uid": "m11",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m9",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m14",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m11",
+        "ifaceId": "C"
+      }
+    },
+    {
+      "a": {
+        "uid": "m17",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m11",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m26",
+        "ifaceId": "B"
+      },
+      "b": {
+        "uid": "m17",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m28",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m17",
+        "ifaceId": "C"
+      }
+    },
+    {
+      "a": {
+        "uid": "m35",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m26",
+        "ifaceId": "C"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1348",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m35",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1380",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m17",
+        "ifaceId": "D"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1382",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m1380",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1391",
+        "ifaceId": "B"
+      },
+      "b": {
+        "uid": "m28",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1394",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m1391",
+        "ifaceId": "A"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1399",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m26",
+        "ifaceId": "A"
+      }
+    }
+  ],
+  "openEnds": [],
+  "acceptance": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "nav": [
+      {
+        "to": "bay-hydro(m14)",
+        "length": 22.5
+      },
+      {
+        "to": "bay-reactor(m1348)",
+        "length": 31.5
+      },
+      {
+        "to": "bay-med(m1382)",
+        "length": 26.5
+      }
+    ],
+    "stats": {
+      "modules": 14,
+      "connections": 13,
+      "openEnds": 0
+    }
+  },
+  "stats": {
+    "nodes": 134,
+    "backtracks": 120,
+    "redirects": 12,
+    "loops": 0
+  },
+  "feedback": []
+}

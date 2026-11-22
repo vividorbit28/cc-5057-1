@@ -1,0 +1,190 @@
+{
+  "format": "orbital-station-manifest/1",
+  "seed": "demo-1",
+  "spec": {
+    "entrance": "airlock",
+    "modules": {
+      "corr-straight": 2,
+      "corr-corner": 1,
+      "corr-t": 1,
+      "bay-med": 1,
+      "cap": 1
+    },
+    "targets": [
+      "medbay"
+    ],
+    "spacing": [],
+    "bounds": {
+      "min": {
+        "x": -20,
+        "z": -20
+      },
+      "max": {
+        "x": 20,
+        "y": 8,
+        "z": 20
+      }
+    },
+    "budget": 20000,
+    "seed": "demo-1"
+  },
+  "placements": [
+    {
+      "uid": "m1",
+      "type": "airlock",
+      "rot": 0,
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "uid": "m4",
+      "type": "corr-t",
+      "rot": 0,
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 4
+      }
+    },
+    {
+      "uid": "m9",
+      "type": "corr-straight",
+      "rot": 1,
+      "pos": {
+        "x": -6,
+        "y": 0,
+        "z": 4.5
+      }
+    },
+    {
+      "uid": "m11",
+      "type": "corr-corner",
+      "rot": 1,
+      "pos": {
+        "x": -10,
+        "y": 0,
+        "z": 4
+      }
+    },
+    {
+      "uid": "m14",
+      "type": "bay-med",
+      "rot": 0,
+      "pos": {
+        "x": -11,
+        "y": 0,
+        "z": 8
+      }
+    },
+    {
+      "uid": "m16",
+      "type": "corr-straight",
+      "rot": 3,
+      "pos": {
+        "x": 4,
+        "y": 0,
+        "z": 4.5
+      }
+    },
+    {
+      "uid": "m18",
+      "type": "cap",
+      "rot": 1,
+      "pos": {
+        "x": 10,
+        "y": 0,
+        "z": 4.5
+      }
+    }
+  ],
+  "connections": [
+    {
+      "a": {
+        "uid": "m4",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m1",
+        "ifaceId": "A"
+      }
+    },
+    {
+      "a": {
+        "uid": "m9",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m4",
+        "ifaceId": "C"
+      }
+    },
+    {
+      "a": {
+        "uid": "m11",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m9",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m14",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m11",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m16",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m4",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m18",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m16",
+        "ifaceId": "B"
+      }
+    }
+  ],
+  "openEnds": [],
+  "acceptance": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "nav": [
+      {
+        "to": "bay-med(m14)",
+        "length": 20.5
+      }
+    ],
+    "stats": {
+      "modules": 7,
+      "connections": 6,
+      "openEnds": 0
+    }
+  },
+  "stats": {
+    "nodes": 7,
+    "backtracks": 0,
+    "redirects": 0,
+    "loops": 0,
+    "ms": 10
+  },
+  "feedback": []
+}

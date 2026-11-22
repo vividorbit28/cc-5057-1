@@ -1,0 +1,415 @@
+{
+  "format": "orbital-station-manifest/1",
+  "seed": "demo-1",
+  "spec": {
+    "entrance": "airlock",
+    "modules": {
+      "corr-straight": 4,
+      "corr-corner": 2,
+      "corr-t": 2,
+      "corr-x": 1,
+      "connector": 2,
+      "bay-med": 1,
+      "bay-reactor": 1,
+      "bay-hydro": 1,
+      "cap": 2
+    },
+    "targets": [
+      "medbay",
+      "reactor",
+      "hydro"
+    ],
+    "spacing": [
+      {
+        "a": "reactor",
+        "b": "medbay",
+        "min": 12
+      },
+      {
+        "a": "reactor",
+        "b": "hydro",
+        "min": 8
+      }
+    ],
+    "bounds": {
+      "min": {
+        "x": -30,
+        "z": -30
+      },
+      "max": {
+        "x": 30,
+        "y": 8,
+        "z": 30
+      }
+    },
+    "budget": 120000,
+    "seed": "demo-1"
+  },
+  "placements": [
+    {
+      "uid": "m1",
+      "type": "airlock",
+      "rot": 0,
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "uid": "m15",
+      "type": "corr-straight",
+      "rot": 0,
+      "pos": {
+        "x": 0.5,
+        "y": 0,
+        "z": 4
+      }
+    },
+    {
+      "uid": "m33",
+      "type": "corr-x",
+      "rot": 0,
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 10
+      }
+    },
+    {
+      "uid": "m37",
+      "type": "bay-med",
+      "rot": 1,
+      "pos": {
+        "x": -6,
+        "y": 0,
+        "z": 9
+      }
+    },
+    {
+      "uid": "m42",
+      "type": "cap",
+      "rot": 2,
+      "pos": {
+        "x": 0.5,
+        "y": 0,
+        "z": 14
+      }
+    },
+    {
+      "uid": "m52",
+      "type": "corr-corner",
+      "rot": 3,
+      "pos": {
+        "x": 4,
+        "y": 0,
+        "z": 10
+      }
+    },
+    {
+      "uid": "m65",
+      "type": "corr-straight",
+      "rot": 2,
+      "pos": {
+        "x": 4.5,
+        "y": 0,
+        "z": 4
+      }
+    },
+    {
+      "uid": "m72",
+      "type": "corr-t",
+      "rot": 1,
+      "pos": {
+        "x": 4,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "uid": "m76",
+      "type": "corr-straight",
+      "rot": 2,
+      "pos": {
+        "x": 4.5,
+        "y": 0,
+        "z": -6
+      }
+    },
+    {
+      "uid": "m80",
+      "type": "cap",
+      "rot": 0,
+      "pos": {
+        "x": 4.5,
+        "y": 0,
+        "z": -7
+      }
+    },
+    {
+      "uid": "m88",
+      "type": "connector",
+      "rot": 3,
+      "pos": {
+        "x": 8,
+        "y": 0,
+        "z": 0.5
+      }
+    },
+    {
+      "uid": "m93",
+      "type": "connector",
+      "rot": 3,
+      "pos": {
+        "x": 11,
+        "y": 0,
+        "z": 0.5
+      }
+    },
+    {
+      "uid": "m1665",
+      "type": "corr-t",
+      "rot": 3,
+      "pos": {
+        "x": 14,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "uid": "m1667",
+      "type": "bay-hydro",
+      "rot": 2,
+      "pos": {
+        "x": 12,
+        "y": 0,
+        "z": -6
+      }
+    },
+    {
+      "uid": "m1670",
+      "type": "corr-straight",
+      "rot": 0,
+      "pos": {
+        "x": 14.5,
+        "y": 0,
+        "z": 4
+      }
+    },
+    {
+      "uid": "m1673",
+      "type": "corr-corner",
+      "rot": 0,
+      "pos": {
+        "x": 14,
+        "y": 0,
+        "z": 10
+      }
+    },
+    {
+      "uid": "m1678",
+      "type": "bay-reactor",
+      "rot": 3,
+      "pos": {
+        "x": 18,
+        "y": 0,
+        "z": 8
+      }
+    }
+  ],
+  "connections": [
+    {
+      "a": {
+        "uid": "m15",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m1",
+        "ifaceId": "A"
+      }
+    },
+    {
+      "a": {
+        "uid": "m33",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m15",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m37",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m33",
+        "ifaceId": "C"
+      }
+    },
+    {
+      "a": {
+        "uid": "m42",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m33",
+        "ifaceId": "D"
+      }
+    },
+    {
+      "a": {
+        "uid": "m52",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m33",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m65",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m52",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m72",
+        "ifaceId": "B"
+      },
+      "b": {
+        "uid": "m65",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m76",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m72",
+        "ifaceId": "C"
+      }
+    },
+    {
+      "a": {
+        "uid": "m80",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m76",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m88",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m72",
+        "ifaceId": "A"
+      }
+    },
+    {
+      "a": {
+        "uid": "m93",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m88",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1665",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m93",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1667",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m1665",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1670",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m1665",
+        "ifaceId": "C"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1673",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m1670",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m1678",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m1673",
+        "ifaceId": "B"
+      }
+    }
+  ],
+  "openEnds": [],
+  "acceptance": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "nav": [
+      {
+        "to": "bay-med(m37)",
+        "length": 16.5
+      },
+      {
+        "to": "bay-hydro(m1667)",
+        "length": 44.5
+      },
+      {
+        "to": "bay-reactor(m1678)",
+        "length": 50.5
+      }
+    ],
+    "stats": {
+      "modules": 17,
+      "connections": 16,
+      "openEnds": 0
+    }
+  },
+  "stats": {
+    "nodes": 195,
+    "backtracks": 178,
+    "redirects": 8,
+    "loops": 0,
+    "ms": 19
+  },
+  "feedback": []
+}

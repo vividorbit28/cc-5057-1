@@ -1,0 +1,276 @@
+{
+  "format": "orbital-station-manifest/1",
+  "seed": "demo-1",
+  "spec": {
+    "entrance": "airlock",
+    "modules": {
+      "adapter": 1,
+      "corr-wide": 2,
+      "hangar": 1,
+      "corr-straight": 2,
+      "corr-t": 2,
+      "bay-med": 1,
+      "cap": 1
+    },
+    "targets": [
+      "hangar",
+      "medbay"
+    ],
+    "spacing": [],
+    "bounds": {
+      "min": {
+        "x": -40,
+        "z": -40
+      },
+      "max": {
+        "x": 40,
+        "y": 8,
+        "z": 40
+      }
+    },
+    "budget": 200000,
+    "seed": "demo-1"
+  },
+  "placements": [
+    {
+      "uid": "m1",
+      "type": "airlock",
+      "rot": 0,
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "uid": "m76",
+      "type": "corr-straight",
+      "rot": 0,
+      "pos": {
+        "x": 0.5,
+        "y": 0,
+        "z": 4
+      }
+    },
+    {
+      "uid": "m150",
+      "type": "corr-t",
+      "rot": 0,
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 10
+      }
+    },
+    {
+      "uid": "m153",
+      "type": "bay-med",
+      "rot": 1,
+      "pos": {
+        "x": -6,
+        "y": 0,
+        "z": 9
+      }
+    },
+    {
+      "uid": "m156",
+      "type": "corr-straight",
+      "rot": 3,
+      "pos": {
+        "x": 4,
+        "y": 0,
+        "z": 10.5
+      }
+    },
+    {
+      "uid": "m160",
+      "type": "corr-t",
+      "rot": 3,
+      "pos": {
+        "x": 10,
+        "y": 0,
+        "z": 10
+      }
+    },
+    {
+      "uid": "m163",
+      "type": "adapter",
+      "rot": 2,
+      "pos": {
+        "x": 10,
+        "y": 0,
+        "z": 7
+      }
+    },
+    {
+      "uid": "m167",
+      "type": "cap",
+      "rot": 2,
+      "pos": {
+        "x": 10.5,
+        "y": 0,
+        "z": 14
+      }
+    },
+    {
+      "uid": "m170",
+      "type": "corr-wide",
+      "rot": 2,
+      "pos": {
+        "x": 10,
+        "y": 0,
+        "z": 1
+      }
+    },
+    {
+      "uid": "m177",
+      "type": "corr-wide",
+      "rot": 2,
+      "pos": {
+        "x": 10,
+        "y": 0,
+        "z": -5
+      }
+    },
+    {
+      "uid": "m182",
+      "type": "hangar",
+      "rot": 2,
+      "pos": {
+        "x": 7,
+        "y": 0,
+        "z": -17
+      }
+    }
+  ],
+  "connections": [
+    {
+      "a": {
+        "uid": "m76",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m1",
+        "ifaceId": "A"
+      }
+    },
+    {
+      "a": {
+        "uid": "m150",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m76",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m153",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m150",
+        "ifaceId": "C"
+      }
+    },
+    {
+      "a": {
+        "uid": "m156",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m150",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m160",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m156",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m163",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m160",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m167",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m160",
+        "ifaceId": "C"
+      }
+    },
+    {
+      "a": {
+        "uid": "m170",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m163",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m177",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m170",
+        "ifaceId": "B"
+      }
+    },
+    {
+      "a": {
+        "uid": "m182",
+        "ifaceId": "A"
+      },
+      "b": {
+        "uid": "m177",
+        "ifaceId": "B"
+      }
+    }
+  ],
+  "openEnds": [],
+  "acceptance": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "nav": [
+      {
+        "to": "bay-med(m153)",
+        "length": 16.5
+      },
+      {
+        "to": "hangar(m182)",
+        "length": 43
+      }
+    ],
+    "stats": {
+      "modules": 11,
+      "connections": 10,
+      "openEnds": 0
+    }
+  },
+  "stats": {
+    "nodes": 39,
+    "backtracks": 28,
+    "redirects": 0,
+    "loops": 0
+  },
+  "feedback": []
+}

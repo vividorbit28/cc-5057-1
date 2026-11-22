@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>轨道站拼装台 · 关卡模块生成器</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header>
+  <strong>轨道站拼装台</strong>
+  <span class="muted">接口匹配 · 全局约束 · 乘客路线 · 几何验收 —— 由轨道站拼装内核驱动</span>
+</header>
+<div id="app">
+  <aside id="left">
+    <section>
+      <h3>生成器</h3>
+      <label>预设 <select id="preset"></select></label>
+      <label>种子 <input id="seed" value="demo-1"></label>
+      <button id="generate" class="primary">生成关卡</button>
+      <div class="stepper">
+        <button id="step-start" title="回到开头">⏮</button>
+        <button id="step-back" title="回退一步">◀</button>
+        <span id="replay-pos" class="mono">-</span>
+        <button id="step-fwd" title="前进一步">▶</button>
+        <button id="step-end" title="到最后">⏭</button>
+        <button id="play">自动播放</button>
+      </div>
+      <button id="back-manual">返回手动拼装视图</button>
+    </section>
+    <section>
+      <h3>模块托盘（拖入视窗）</h3>
+      <div class="stepper">
+        <button id="rot-left">⟲ 旋转</button>
+        <button id="rot-right">⟳ 旋转</button>
+        <span id="rot-indicator" class="mono">朝向 rot0</span>
+      </div>
+      <div id="palette"></div>
+      <button id="remove-selected">移除选中模块 (Del)</button>
+      <div id="ghost-reasons" class="bad"></div>
+    </section>
+    <section>
+      <h3>验收</h3>
+      <button id="accept" class="primary">验收当前装配</button>
+      <div id="acceptance"><div class="muted">尚未验收</div></div>
+    </section>
+  </aside>
+
+  <main>
+    <canvas id="view"></canvas>
+    <div id="hint">拖动=环绕 · 滚轮=缩放 · 点击=选中 · Q/E=旋转待放模块 · 绿框=开放端（可行连接锚点）· 红线=乘客路线</div>
+  </main>
+
+  <aside id="right">
+    <section>
+      <h3>开放端与可行连接</h3>
+      <div id="ends-list"></div>
+      <div id="feasible-list"></div>
+    </section>
+    <section>
+      <h3>失败解释</h3>
+      <div id="conflict"></div>
+    </section>
+    <section>
+      <h3>决策日志（点击跳转）</h3>
+      <div id="log-list"></div>
+    </section>
+    <section>
+      <h3>内核反馈通道</h3>
+      <div id="feedback"></div>
+    </section>
+    <section>
+      <button id="save-manifest" class="primary">保存生成清单</button>
+    </section>
+  </aside>
+</div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
