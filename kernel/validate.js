@@ -1,14 +1,16 @@
 // 验收：从实际装配结果重建碰撞体与可通行表面，做几何碰撞与导航通路检查。
 // 门洞是墙体上的真实缺口；接口不匹配会被报出，不做视觉遮挡。
+// 导航不可达时给出阻断证据：哪些模块（部件身份）的哪些构造挡住了连通区域边界。
 import { MODULES, moduleShell, hatchWorld, WALL_T } from './modules.js';
 import { overlaps, containsPoint, aabbDistance, EPS } from './geom.js';
 
 export const NAV_CELL = 0.5;
+export const NAV_CLEARANCE = 2.0;    // 乘客通行所需净高（米）
 
-// 由装配结果重建世界：碰撞体（墙/障碍）、可通行地板、接口、连接
+// 由装配结果重建世界：碰撞体（墙/障碍）、可通行地板、夹层板、接口、连接
 export function buildWorld(state) {
   const placements = [...state.placements.values()];
-  const world = { walls: [], floors: [], ceilings: [], obstacles: [], placements, boxes: [] };
+  const world = { walls: [], floors: [], ceilings: [], obstacles: [], slabs: [], placements, boxes: [] };
   for (const p of placements) {
     const def = MODULES[p.type];
     const shell = moduleShell(def, p.rot, p.pos);
@@ -16,12 +18,14 @@ export function buildWorld(state) {
     world.floors.push({ ...shell.floor, uid: p.uid });
     world.ceilings.push({ ...shell.ceiling, uid: p.uid });
     world.obstacles.push(...shell.obstacles.map((b) => ({ ...b, uid: p.uid })));
+    world.slabs.push(...(shell.slabs ?? []).map((b) => ({ ...b, uid: p.uid })));
   }
   return world;
 }
 
 // 导航网格：可通行 = 在某模块地板内 且 不被墙体/设备碰撞体阻挡
-export function buildNavGrid(world) {
+// clearance：通行所需净高；低于该净高的悬空构造（如低矮管道）会阻断网格
+export function buildNavGrid(world, clearance = NAV_CLEARANCE) {
   let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
   for (const p of world.placements) {
     minX = Math.min(minX, p.aabb.min.x); maxX = Math.max(maxX, p.aabb.max.x);
@@ -35,7 +39,7 @@ export function buildNavGrid(world) {
   for (let ix = 0; ix < nx; ix++) {
     for (let iz = 0; iz < nz; iz++) {
       const x0 = minX + ix * c, z0 = minZ + iz * c;
-      const cell = { min: { x: x0, y: 0.01, z: z0 }, max: { x: x0 + c, y: 2.0, z: z0 + c } };
+      const cell = { min: { x: x0, y: 0.01, z: z0 }, max: { x: x0 + c, y: clearance, z: z0 + c } };
       const cx = x0 + c / 2, cz = z0 + c / 2;
       const onFloor = world.placements.some((p) =>
         cx > p.aabb.min.x + EPS && cx < p.aabb.max.x - EPS
@@ -98,18 +102,107 @@ export function entrancePoint(state) {
   return null;
 }
 
+// 阻断证据：连通区域边界上被碰撞体挡住的网格，归并到模块（部件身份）与构造标签。
+// 只统计落在某模块地板上的受阻格；模块自身墙体包住自身地板是正常外壳，不计入——
+// 计入的是障碍物（设备/管道）与他人构造的侵入
+function computeBlockers(grid, world, dist, state) {
+  const { nx, nz, c, minX, minZ, walk } = grid;
+  const solids = [
+    ...world.obstacles.map((s) => ({ ...s, ownCounts: true })),
+    ...world.walls.map((s) => ({ ...s, ownCounts: false })),
+  ];
+  const agg = new Map();
+  for (let ix = 0; ix < nx; ix++) {
+    for (let iz = 0; iz < nz; iz++) {
+      if (dist[ix * nz + iz] < 0) continue;
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const ax = ix + dx, az = iz + dz;
+        if (ax < 0 || az < 0 || ax >= nx || az >= nz) continue;
+        const ai = ax * nz + az;
+        if (walk[ai] || dist[ai] >= 0) continue;
+        const cx = minX + (ax + 0.5) * c, cz = minZ + (az + 0.5) * c;
+        const floorOwners = new Set(world.placements
+          .filter((p) => cx > p.aabb.min.x + EPS && cx < p.aabb.max.x - EPS
+            && cz > p.aabb.min.z + EPS && cz < p.aabb.max.z - EPS)
+          .map((p) => p.uid));
+        if (floorOwners.size === 0) continue;
+        const cell = {
+          min: { x: minX + ax * c, y: 0.01, z: minZ + az * c },
+          max: { x: minX + (ax + 1) * c, y: NAV_CLEARANCE, z: minZ + (az + 1) * c },
+        };
+        for (const s of solids) {
+          if (!s.uid || !overlaps(cell, s)) continue;
+          if (!s.ownCounts && floorOwners.has(s.uid)) continue; // 自身墙壳不算证据
+          let e = agg.get(s.uid);
+          if (!e) {
+            e = { uid: s.uid, type: state.placements.get(s.uid)?.type ?? '?', labels: new Set(), cells: 0 };
+            agg.set(s.uid, e);
+          }
+          if (s.label) e.labels.add(s.label);
+          e.cells += 1;
+        }
+      }
+    }
+  }
+  return [...agg.values()]
+    .map((e) => ({ uid: e.uid, type: e.type, labels: [...e.labels], cells: e.cells }))
+    .sort((a, b) => b.cells - a.cells)
+    .slice(0, 8);
+}
+
+function cellDist(grid, dist, x, z) {
+  const c = worldToCell(grid, x, z);
+  if (c.ix < 0 || c.iz < 0 || c.ix >= grid.nx || c.iz >= grid.nz) return -1;
+  return dist[c.ix * grid.nz + c.iz];
+}
+
+// 封死判定：不可达目标舱是否已不可能再恢复连通。
+// 导航区域只能经区域内的开放端向外生长；若入口区域或目标区域已无开放端，
+// 任何后续模块都无法把两者连通——此时继续搜索必然失败，应立即回溯。
+export function sealedUnreachableTargets(state, spec) {
+  const world = buildWorld(state);
+  const grid = buildNavGrid(world);
+  if (!grid) return [];
+  const ent = entrancePoint(state);
+  if (!ent) return [];
+  const { dist, ok } = bfs(grid, worldToCell(grid, ent.x, ent.z));
+  if (!ok) return [];
+  const unreachable = targetPoints(state, spec)
+    .filter((t) => cellDist(grid, dist, t.x, t.z) < 0);
+  if (unreachable.length === 0) return [];
+  const openInside = state.openEnds.map((e) => ({
+    x: e.center.x - e.dir.x * (WALL_T + 0.35),
+    z: e.center.z - e.dir.z * (WALL_T + 0.35),
+  }));
+  const entranceHasOpen = openInside.some((p) => cellDist(grid, dist, p.x, p.z) >= 0);
+  if (!entranceHasOpen) return unreachable.map((t) => `${t.type}(${t.uid})`);
+  const sealed = [];
+  for (const t of unreachable) {
+    const { dist: tdist, ok: tok } = bfs(grid, worldToCell(grid, t.x, t.z));
+    if (!tok) { sealed.push(`${t.type}(${t.uid})`); continue; }
+    const targetHasOpen = openInside.some((p) => cellDist(grid, tdist, p.x, p.z) >= 0);
+    if (!targetHasOpen) sealed.push(`${t.type}(${t.uid})`);
+  }
+  return sealed;
+}
+
 // 乘客路线：入口 -> 各目标舱导航点的网格 BFS
 export function validateNav(state, spec) {
   const world = buildWorld(state);
   const grid = buildNavGrid(world);
   const unreachable = [];
   const paths = [];
-  if (!grid) return { ok: true, unreachable, paths, grid: null };
+  const blockedBy = [];
+  if (!grid) return { ok: true, unreachable, paths, blockedBy, grid: null };
   const ent = entrancePoint(state);
-  if (!ent) return { ok: true, unreachable, paths, grid };
+  if (!ent) return { ok: true, unreachable, paths, blockedBy, grid };
   const start = worldToCell(grid, ent.x, ent.z);
   const { dist, prev, ok } = bfs(grid, start);
-  if (!ok) return { ok: false, unreachable: ['入口出生点被阻挡'], paths, grid };
+  if (!ok) return { ok: false, unreachable: ['入口出生点被阻挡'], paths, blockedBy, grid };
+  const toWorld = (cell) => ({
+    x: grid.minX + (cell.ix + 0.5) * grid.c,
+    z: grid.minZ + (cell.iz + 0.5) * grid.c,
+  });
   for (const t of targetPoints(state, spec)) {
     const c = worldToCell(grid, t.x, t.z);
     const idx = c.ix * grid.nz + c.iz;
@@ -117,7 +210,7 @@ export function validateNav(state, spec) {
       unreachable.push(`${t.type}(${t.uid})`);
       continue;
     }
-    // 还原路径（供界面绘制乘客路线）
+    // 还原路径（供界面绘制乘客路线、清单保存演示路线）
     const cells = [];
     let cur = idx;
     while (cur !== -1) {
@@ -125,9 +218,12 @@ export function validateNav(state, spec) {
       cur = prev[cur];
     }
     cells.reverse();
-    paths.push({ to: `${t.type}(${t.uid})`, tag: t.tag, length: dist[idx] * grid.c, cells });
+    paths.push({ to: `${t.type}(${t.uid})`, tag: t.tag, length: dist[idx] * grid.c, cells, pts: cells.map(toWorld) });
   }
-  return { ok: unreachable.length === 0, unreachable, paths, grid };
+  if (unreachable.length > 0) {
+    blockedBy.push(...computeBlockers(grid, world, dist, state));
+  }
+  return { ok: unreachable.length === 0, unreachable, paths, blockedBy, grid };
 }
 
 // 全场景验收：几何碰撞 + 接口审计 + 间距 + 导航通路
@@ -190,7 +286,7 @@ export function validateScene(state, spec = state.spec ?? {}) {
     ok: errors.length === 0,
     errors, warnings,
     openEnds,
-    nav: { paths: nav.paths, unreachable: nav.unreachable },
+    nav: { paths: nav.paths, unreachable: nav.unreachable, blockedBy: nav.blockedBy },
     stats: {
       modules: placements.length,
       connections: connCount,

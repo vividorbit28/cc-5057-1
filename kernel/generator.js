@@ -1,7 +1,10 @@
-// 生成器：预设规格 -> 求解 -> 全场景验收 -> 生成清单（或结构化失败）
+// 生成器：预设规格 -> 求解求解 -> 全场景验收 -> 生成清单（或结构化失败）
+// 清单 v2：种子、规格、放置、连接、开放端、验收报告之外，
+// 还保存模块源文件（套件来源/参数/部件身份哈希）、可拼装接口资料与演示路线。
 import { solve } from './solver.js';
 import { validateScene } from './validate.js';
 import { recordFeedback, getFeedback } from './feedback.js';
+import { kitCatalogFor, moduleTableFor } from './kit.js';
 
 export const PRESETS = {
   small: {
@@ -73,6 +76,32 @@ export const PRESETS = {
       budget: 120000,
     },
   },
+  deck: {
+    label: '双层站台（套件·异高接头）',
+    spec: {
+      entrance: 'airlock',
+      modules: {
+        'deck-hall': 1, 'deck-corner': 2, 'deck-link-high': 2, 'deck-link-low': 1,
+        'deck-cargo': 1, adapter: 1, 'corr-wide': 1,
+        'corr-straight': 2, 'corr-t': 1, cap: 3,
+      },
+      targets: ['deck', 'cargo'],
+      spacing: [],
+      bounds: { min: { x: -36, z: -36 }, max: { x: 36, y: 10, z: 36 } },
+      budget: 200000,
+    },
+  },
+  'deck-impossible': {
+    label: '双层站台·不兼容库存（失败演示）',
+    spec: {
+      entrance: 'airlock',
+      modules: { 'corr-straight': 1, 'deck-service': 1 },
+      targets: [],
+      spacing: [],
+      bounds: { min: { x: -20, z: -20 }, max: { x: 20, y: 10, z: 20 } },
+      budget: 5000,
+    },
+  },
   impossible: {
     label: '不可满足（失败演示）',
     spec: {
@@ -106,10 +135,13 @@ export function generate(spec) {
     recordFeedback({ source: 'generator', kind: 'acceptance-failed', seed: spec.seed, errors: acceptance.errors });
     return { ok: false, reason: 'acceptance-failed', acceptance, log: r.log, stats: r.stats, feedback: getFeedback() };
   }
+  const usedTypes = r.state.order.map((uid) => r.state.placements.get(uid).type);
   const manifest = {
-    format: 'orbital-station-manifest/1',
+    format: 'orbital-station-manifest/2',
     seed: spec.seed,
     spec,
+    kits: kitCatalogFor(usedTypes),
+    moduleTable: moduleTableFor(usedTypes),
     placements: r.state.order.map((uid) => {
       const p = r.state.placements.get(uid);
       return { uid: p.uid, type: p.type, rot: p.rot, pos: p.pos };
@@ -123,7 +155,8 @@ export function generate(spec) {
       nav: acceptance.nav.paths.map((p) => ({ to: p.to, length: p.length })),
       stats: acceptance.stats,
     },
-    stats: { nodes: r.stats.nodes, backtracks: r.stats.backtracks, redirects: r.stats.redirects, loops: r.stats.loops },
+    routes: acceptance.nav.paths.map((p) => ({ to: p.to, length: p.length, pts: p.pts })),
+    stats: { nodes: r.stats.nodes, backtracks: r.stats.backtracks, redirects: r.stats.redirects, loops: r.stats.loops, sealed: r.stats.sealed ?? 0 },
     feedback: getFeedback(),
   };
   return { ok: true, state: r.state, manifest, log: r.log, acceptance };

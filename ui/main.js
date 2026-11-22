@@ -1,9 +1,10 @@
 // 主控：生成面板 + 决策日志逐步回放 + 结果区（可行连接/验收/失败解释/内核反馈/清单）
-import { MODULES } from '../kernel/modules.js';
+import { MODULES, getKits } from '../kernel/modules.js';
 import { generate, makeSpec, PRESETS } from '../kernel/generator.js';
 import { replayLog } from '../kernel/solver.js';
 import { validateNav } from '../kernel/validate.js';
 import { getFeedback, recordFeedback } from '../kernel/feedback.js';
+import { registerKitData, measureModuleClearance, kitCatalogFor, moduleTableFor } from '../kernel/kit.js';
 import { Viewport } from './viewport.js';
 import { showState } from './sceneview.js';
 import { createEditor } from './editor.js';
@@ -64,9 +65,26 @@ const ui = {
     lines.push(`<div class="${acc.ok ? 'ok' : 'bad'}">${acc.ok ? '验收通过' : '验收未通过'}</div>`);
     lines.push(`<div>模块 ${acc.stats.modules} · 连接 ${acc.stats.connections} · 开放端 ${acc.stats.openEnds}</div>`);
     for (const p of acc.nav.paths) lines.push(`<div class="ok">乘客路线 → ${p.to}：${p.length.toFixed(1)}m</div>`);
+    for (const b of acc.nav.blockedBy ?? []) {
+      lines.push(`<div class="warn">连通阻断：${b.type}(${b.uid}) ${b.labels.join('、') || '墙体'} · ${b.cells} 格</div>`);
+    }
     for (const e of acc.errors) lines.push(`<div class="bad">${e}</div>`);
     for (const w of acc.warnings) lines.push(`<div class="warn">${w}</div>`);
     box.innerHTML = lines.join('');
+  },
+  renderKitFindings(results) {
+    const box = $('kit-findings');
+    const lines = [];
+    for (const r of results ?? []) {
+      if (!r?.kit) { lines.push('<div class="finding error">套件格式非法，已拒绝注册</div>'); continue; }
+      lines.push(`<div class="kit-heading">${r.kit.label} <span class="mono muted">${r.kit.id}@${r.kit.version}</span></div>`);
+      if (r.kit.source?.origin) lines.push(`<div class="finding muted">来源 ${r.kit.source.origin}</div>`);
+      for (const f of r.findings ?? []) {
+        lines.push(`<div class="finding ${f.level}">${f.text}</div>`);
+      }
+      if ((r.findings ?? []).length === 0) lines.push('<div class="finding info">校验通过，无异常发现</div>');
+    }
+    box.innerHTML = lines.join('') || '<div class="muted">仅内置核心套件</div>';
   },
   renderConflict(conflict, reason) {
     const box = $('conflict');
@@ -119,17 +137,46 @@ const editor = createEditor({ vp, ui });
 
 function buildPalette() {
   const box = $('palette');
-  for (const def of Object.values(MODULES)) {
-    const b = document.createElement('div');
-    b.className = 'palette-item';
-    b.draggable = true;
-    b.textContent = `${def.label} (${def.type})`;
-    b.title = `接口：${def.interfaces.map((i) => i.type).join(', ')}`;
-    b.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/module', def.type);
-      editor.setDragType(def.type);
+  box.innerHTML = '';
+  for (const kit of getKits()) {
+    const h = document.createElement('div');
+    h.className = 'kit-heading';
+    h.textContent = kit.label;
+    box.appendChild(h);
+    for (const def of Object.values(MODULES).filter((d) => d.kit === kit.id)) {
+      const b = document.createElement('div');
+      b.className = 'palette-item';
+      b.draggable = true;
+      b.textContent = `${def.label} (${def.type})`;
+      const cl = measureModuleClearance(def);
+      b.title = `尺寸 ${def.size.x}×${def.size.y}×${def.size.z} · 接口 ${def.interfaces.map((i) => `${i.id}:${i.type}@${i.face}`).join(', ') || '无'}`
+        + (cl !== null ? ` · 实测通行高度 ${cl}m` : '')
+        + (def.incompatible ? ` · 故意不兼容：${def.incompatible.reason}` : '');
+      b.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/module', def.type);
+        editor.setDragType(def.type);
+      });
+      box.appendChild(b);
+    }
+  }
+}
+
+// 套件加载：图形入口启动时从 kits/ 目录取套件文件注册；失败时回退内置核心套件并提示
+async function loadKits() {
+  try {
+    const idx = await fetch('/kits/index.json').then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
     });
-    box.appendChild(b);
+    const results = [];
+    for (const f of idx.kits ?? []) {
+      const data = await fetch(`/kits/${f}`).then((r) => r.json());
+      results.push(registerKitData(data));
+    }
+    return results;
+  } catch (e) {
+    ui.log(`套件目录加载失败（${e.message}），仅使用内置核心套件`);
+    return [];
   }
 }
 
@@ -189,10 +236,13 @@ function saveManifest() {
     data = app.gen.result.manifest;
   } else {
     const acc = editor.accept();
+    const usedTypes = editor.state.order.map((uid) => editor.state.placements.get(uid).type);
     data = {
-      format: 'orbital-station-manifest/1',
+      format: 'orbital-station-manifest/2',
       seed: '(手动拼装)',
       spec: editor.spec,
+      kits: kitCatalogFor(usedTypes),
+      moduleTable: moduleTableFor(usedTypes),
       placements: editor.state.order.map((uid) => {
         const p = editor.state.placements.get(uid);
         return { uid: p.uid, type: p.type, rot: p.rot, pos: p.pos };
@@ -200,6 +250,7 @@ function saveManifest() {
       connections: editor.state.connections,
       openEnds: editor.state.openEnds,
       acceptance: acc,
+      routes: (acc.nav?.paths ?? []).map((p) => ({ to: p.to, length: p.length, pts: p.pts })),
       feedback: getFeedback(),
     };
   }
@@ -213,10 +264,12 @@ function saveManifest() {
 }
 
 // ---------- 启动 ----------
-function boot() {
+async function boot() {
   vp.resize();
   window.addEventListener('resize', () => { vp.resize(); editor.refresh(); });
 
+  const kitResults = await loadKits();
+  ui.renderKitFindings(kitResults);
   buildPalette();
   const sel = $('preset');
   for (const [k, v] of Object.entries(PRESETS)) {

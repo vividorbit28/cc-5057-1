@@ -12,9 +12,9 @@ import { showState } from './sceneview.js';
 export function createEditor({ vp, ui }) {
   const spec = {
     allowOpenEnds: true,
-    targets: ['medbay', 'reactor', 'hydro'],
+    targets: ['medbay', 'reactor', 'hydro', 'deck', 'cargo'],
     spacing: [{ a: 'reactor', b: 'medbay', min: 8 }],
-    bounds: { min: { x: -30, z: -30 }, max: { x: 30, y: 8, z: 30 } },
+    bounds: { min: { x: -30, z: -30 }, max: { x: 30, y: 10, z: 30 } },
     modules: {},
   };
   const state = newAssembly(spec);

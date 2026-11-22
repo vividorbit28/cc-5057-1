@@ -1,12 +1,65 @@
-// 模块库：自制走廊、设备舱、连接件。每个模块定义接口（类型/朝向/位置）、
-// 外壳（墙体真实开门洞）、内部障碍物（设备）与导航目标点。
+// 模块注册表：内置核心套件 + 可注册的套件文件（kits/*.kit.json）。
+// 每个模块定义接口（类型/朝向/位置）、外壳（墙体真实开门洞）、内部障碍物（设备）、
+// 夹层板（双层资产的上层平台，仅构造与展示，不阻断乘客高度层）与导航目标点。
+// 注册时为每个模块计算部件身份哈希（来源与参数的指纹），供清单与重建核验。
 import { rotVec, rotSize, localToWorld, transformBox, aabbOf } from './geom.js';
+import { hashSeed } from './rng.js';
 
 export const WALL_T = 0.25;          // 墙厚（内缩于模块包围盒）
 export const INTERFACE_TYPES = {
   C2: { w: 2.0, h: 2.4, label: '标准人员接口 C2' },
   C4: { w: 3.2, h: 3.0, label: '宽幅货运接口 C4' },
 };
+
+export const MODULES = {};           // 实时注册表：type -> def
+const KITS = new Map();              // kitId -> 套件元数据（来源/参数/标签）
+
+export function registerInterfaceTypes(types, kitId) {
+  for (const [id, t] of Object.entries(types ?? {})) {
+    const prev = INTERFACE_TYPES[id];
+    if (prev && (prev.w !== t.w || prev.h !== t.h)) {
+      throw new Error(`接口类型 ${id} 尺寸冲突：套件 ${kitId} 声明 ${t.w}x${t.h}，已注册 ${prev.w}x${prev.h}`);
+    }
+    INTERFACE_TYPES[id] = { w: t.w, h: t.h, label: t.label ?? id, kit: kitId };
+  }
+}
+
+// 部件身份：对决定拼装行为的全部字段做稳定哈希
+export function stableStringify(v) {
+  if (Array.isArray(v)) return `[${v.map(stableStringify).join(',')}]`;
+  if (v && typeof v === 'object') {
+    return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${stableStringify(v[k])}`).join(',')}}`;
+  }
+  return JSON.stringify(v ?? null);
+}
+
+export function defHash(def) {
+  const canonical = {
+    type: def.type, label: def.label, size: def.size,
+    interfaces: def.interfaces, tags: def.tags,
+    obstacles: def.obstacles, hatch: def.hatch, slabs: def.slabs,
+  };
+  return hashSeed(stableStringify(canonical)).toString(16).padStart(8, '0');
+}
+
+export function registerModules(defs, kitMeta) {
+  KITS.set(kitMeta.id, kitMeta);
+  for (const d of defs) {
+    const full = {
+      tags: [], obstacles: [], hatch: null, slabs: [], incompatible: null,
+      ...d,
+      doorCount: d.interfaces.length,
+      kit: kitMeta.id,
+    };
+    full.hash = defHash(full);
+    MODULES[d.type] = full;
+  }
+  return kitMeta;
+}
+
+export function getKits() {
+  return [...KITS.values()];
+}
 
 // face: N(z=min) S(z=max) W(x=min) E(x=max)；u 为门面内中心偏移（米）
 function ifaceLocal(def, i) {
@@ -21,12 +74,16 @@ function ifaceLocal(def, i) {
 }
 
 function def(type, label, size, interfaces, extra = {}) {
-  const d = { type, label, size, interfaces, tags: extra.tags ?? [], obstacles: extra.obstacles ?? [], hatch: extra.hatch ?? null };
-  d.doorCount = interfaces.length;
-  return d;
+  return { type, label, size, interfaces, ...extra };
 }
 
-export const MODULES = Object.fromEntries([
+export const CORE_KIT = {
+  id: 'core', version: '1.0.0', label: '核心舱段套件（内置）',
+  source: { origin: 'kernel/modules.js', note: '内置核心套件：走廊、设备舱、连接件' },
+  params: { passengerClearance: 2.0, wallThickness: WALL_T },
+};
+
+registerModules([
   def('airlock', '入口气闸', { x: 4, y: 3, z: 4 }, [
     { id: 'A', type: 'C2', face: 'S', u: 2 },
   ], { tags: ['entrance'], hatch: { x: 2, z: 2 } }),
@@ -105,7 +162,7 @@ export const MODULES = Object.fromEntries([
   def('cap', '端盖', { x: 3, y: 3, z: 1 }, [
     { id: 'A', type: 'C2', face: 'S', u: 1.5 },
   ], { tags: ['cap'] }),
-].map((d) => [d.type, d]));
+], CORE_KIT);
 
 // 模块某接口的局部几何（中心点/外法向/门面内轴向）
 export function ifaceGeom(def, iface) {
@@ -131,7 +188,7 @@ export function worldIfaces(def, rot, pos) {
   return def.interfaces.map((i) => worldIface(def, i, rot, pos));
 }
 
-// 生成模块外壳：地板、天花、四面墙（门洞是墙上真实的缺口，不做视觉遮挡）
+// 生成模块外壳：地板、天花、四面墙（门洞是墙上真实的缺口，不做视觉遮挡）、夹层板
 export function moduleShell(def, rot, pos) {
   const s = def.size;
   const T = WALL_T;
@@ -142,7 +199,7 @@ export function moduleShell(def, rot, pos) {
     let box;
     if (f === 'N') box = { min: { x: 0, y: 0, z: 0 }, max: { x: s.x, y: s.y, z: T } };
     if (f === 'S') box = { min: { x: 0, y: 0, z: s.z - T }, max: { x: s.x, y: s.y, z: s.z } };
-    if (f === 'W') box = { min: { x: 0, y: 0, z: 0 }, max: { x: T, y: s.y, z: s.z } };
+    if (f === 'W') box = { min: { x: 0, y: 0, z: 0 }, max: { x: T, y: 0, z: s.y, z: s.z } };
     if (f === 'E') box = { min: { x: s.x - T, y: 0, z: 0 }, max: { x: s.x, y: s.y, z: s.z } };
     const doors = def.interfaces.filter((i) => i.face === f)
       .map((i) => ({ u: i.u, ...INTERFACE_TYPES[i.type] }))
@@ -170,7 +227,8 @@ export function moduleShell(def, rot, pos) {
   const floor = transformBox({ min: { x: 0, y: -0.2, z: 0 }, max: { x: s.x, y: 0, z: s.z } }, rot, pos, s);
   const ceiling = transformBox({ min: { x: 0, y: s.y, z: 0 }, max: { x: s.x, y: s.y + 0.2, z: s.z } }, rot, pos, s);
   const obstacles = def.obstacles.map((o) => ({ ...transformBox(o, rot, pos, s), label: o.label }));
-  return { walls, floor, ceiling, obstacles };
+  const slabs = (def.slabs ?? []).map((b) => ({ ...transformBox(b, rot, pos, s), label: b.label }));
+  return { walls, floor, ceiling, obstacles, slabs };
 }
 
 export function moduleAabb(def, rot, pos) {

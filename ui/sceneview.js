@@ -6,6 +6,8 @@ export const TAG_COLORS = {
   entrance: '#26c6da', corridor: '#78909c', connector: '#66bb6a',
   medbay: '#e57373', reactor: '#ffb74d', hydro: '#9ccc65',
   hangar: '#ba68c8', cap: '#8d6e63',
+  deck: '#4db6ac', cargo: '#9575cd', service: '#90a4ae',
+  'low-clearance': '#a1887f', corner: '#78909c',
 };
 
 export function colorFor(p) {
@@ -29,6 +31,10 @@ export function showState(vp, state, opts = {}) {
   }
   for (const o of world.obstacles) {
     vp.boxes.push({ ...o, color: '#263238', alpha: 1, uid: o.uid, skipTop: false });
+  }
+  // 夹层板（双层资产的上层平台）
+  for (const s of world.slabs ?? []) {
+    vp.boxes.push({ ...s, color: '#546e7a', alpha: 0.85, uid: s.uid, skipTop: false });
   }
   // 开放端门框：这是可行连接的锚点，醒目提示而非遮挡
   for (const e of state.openEnds) {

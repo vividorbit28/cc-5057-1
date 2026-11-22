@@ -1,6 +1,10 @@
 // CLI：node kernel/cli.js --preset medium --seed alpha [--out out]
+// 命令行仅作辅助；图形入口见 README（node ui/server.js）
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { generate, makeSpec, PRESETS } from './generator.js';
+import { loadBuiltinKits } from './kitio.js';
+
+loadBuiltinKits();
 
 function arg(name, dflt) {
   const i = process.argv.indexOf(`--${name}`);

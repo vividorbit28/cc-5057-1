@@ -4,8 +4,10 @@
   "description": "轨道站关卡模块生成器：接口匹配 + 全局约束求解 + 可进入三维场景验收",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/",
+    "test": "node --test tests/*.test.js",
     "serve": "node ui/server.js",
-    "generate": "node kernel/cli.js"
+    "generate": "node kernel/cli.js",
+    "rebuild": "node kernel/rebuild.js --all out",
+    "compare": "node kernel/compare.js"
   }
 }

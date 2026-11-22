@@ -1,0 +1,144 @@
+{
+  "generatedAt": "2026-11-22T19:39:28.908Z",
+  "scenarios": [
+    {
+      "preset": "small",
+      "seed": "cmp-1",
+      "forward": {
+        "ok": true,
+        "nodes": 51,
+        "backtracks": 44,
+        "redirects": 4,
+        "ms": 11
+      },
+      "reverseInfer": {
+        "ms": 0,
+        "ok": true,
+        "missing": {},
+        "surplus": {},
+        "connectionsMatch": true,
+        "tampered": {
+          "removed": "corr-straight",
+          "missing": {
+            "corr-straight": 1
+          }
+        }
+      },
+      "reverseComplete": {
+        "ok": true,
+        "removed": 3,
+        "steps": 6,
+        "backtracks": 2,
+        "acceptanceOk": true,
+        "ms": 4
+      },
+      "clearanceMismatch": {
+        "note": "核心套件无同尺寸异通行高接头，本场景不适用"
+      }
+    },
+    {
+      "preset": "medium",
+      "seed": "cmp-1",
+      "forward": {
+        "ok": true,
+        "nodes": 17,
+        "backtracks": 3,
+        "redirects": 0,
+        "ms": 5
+      },
+      "reverseInfer": {
+        "ms": 1,
+        "ok": true,
+        "missing": {},
+        "surplus": {},
+        "connectionsMatch": true,
+        "tampered": {
+          "removed": "corr-straight",
+          "missing": {
+            "corr-straight": 1
+          }
+        }
+      },
+      "reverseComplete": {
+        "ok": true,
+        "removed": 3,
+        "steps": 5,
+        "backtracks": 1,
+        "acceptanceOk": true,
+        "ms": 2
+      },
+      "clearanceMismatch": {
+        "note": "核心套件无同尺寸异通行高接头，本场景不适用"
+      }
+    },
+    {
+      "preset": "deck",
+      "seed": "cmp-1",
+      "forward": {
+        "ok": true,
+        "nodes": 16,
+        "backtracks": 0,
+        "redirects": 0,
+        "ms": 13
+      },
+      "reverseInfer": {
+        "ms": 1,
+        "ok": true,
+        "missing": {},
+        "surplus": {},
+        "connectionsMatch": true,
+        "tampered": {
+          "removed": "deck-hall",
+          "missing": {
+            "deck-hall": 1
+          }
+        }
+      },
+      "reverseComplete": {
+        "ok": true,
+        "removed": 3,
+        "steps": 4,
+        "backtracks": 0,
+        "acceptanceOk": true,
+        "ms": 3
+      },
+      "clearanceMismatch": {
+        "note": "deck-link-low 与 deck-link-high 尺寸/接口完全相同，通行高度 1.1m vs 3.0m",
+        "forwardFree": {
+          "ok": true,
+          "reason": null,
+          "ms": 3
+        },
+        "reverseForcedLow": {
+          "geometricOk": true,
+          "acceptanceOk": false,
+          "navErrors": [
+            "导航通路断裂：deck-hall(m2)"
+          ],
+          "blockedBy": [
+            {
+              "uid": "m733",
+              "type": "deck-link-low",
+              "labels": [
+                "过街主管道（净高1.1m）"
+              ],
+              "cells": 4
+            }
+          ],
+          "ms": 2
+        },
+        "reverseForcedHigh": {
+          "geometricOk": true,
+          "acceptanceOk": true,
+          "ms": 4
+        }
+      }
+    }
+  ],
+  "conclusions": [
+    "正向生成（按连接口约束）：small 51 节点/11ms，medium 17 节点/5ms，deck 16 节点/13ms——全量搜索，成本随库存规模增长",
+    "逆推缺件（从成品清单核销库存）：三个场景均在 1ms 内完成，缺件 {}，篡改库存即报 {\"corr-straight\":1}——快但必须有成品清单",
+    "补缺完成（拆掉 3 件再补回）：small 6 步/4ms，medium 5 步/2ms，deck 4 步/3ms——比正向搜索便宜，但只适用于“缺什么已知”的情形",
+    "异高接头：正向自由放置成功（求解器绕开低矮件）；逆向被迫几何下低矮件接口约束全过、几何完成，但验收导航断裂，阻断证据指向 deck-link-low(m733)——必须回溯更换高通行变体；同几何换高变体后验收通过"
+  ]
+}

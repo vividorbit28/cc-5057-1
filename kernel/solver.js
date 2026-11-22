@@ -8,7 +8,7 @@ import {
   newAssembly, makePlacement, checkPlacement, addPlacement, removePlacement,
   openEndsSorted, moduleGraph, reachableFrom, endsFeasible, rebuildOpenEnds, resetUid,
 } from './assembly.js';
-import { validateNav } from './validate.js';
+import { validateNav, sealedUnreachableTargets } from './validate.js';
 import { fmtVec } from './geom.js';
 
 export function solve(spec) {
@@ -19,6 +19,19 @@ export function solve(spec) {
   const log = [];
   const stats = { nodes: 0, backtracks: 0, redirects: 0, loops: 0 };
   const budget = spec.budget ?? 20000;
+
+  // 部件身份核验：规格引用的模块类型必须已注册（套件未加载时给出结构化失败，不抛异常）
+  const unknown = [...new Set([spec.entrance ?? 'airlock', ...Object.keys(state.remaining)])]
+    .filter((t) => !MODULES[t]);
+  if (unknown.length > 0) {
+    const text = `未注册的模块类型：${unknown.join(', ')}（对应套件未加载）`;
+    log.push({ kind: 'dead-end', note: text });
+    return {
+      ok: false, reason: 'unknown-module',
+      conflict: { atDepth: 0, atInterface: null, remaining: { ...state.remaining }, conflictingModules: [], conditions: [text], tried: [] },
+      log, stats: { ...stats, ms: Date.now() - t0 }, seed: spec.seed,
+    };
+  }
 
   // 入口固定落位（确定性锚点）
   const entranceType = spec.entrance ?? 'airlock';
@@ -33,6 +46,13 @@ export function solve(spec) {
   function placedTargets() {
     const tags = spec.targets ?? [];
     return [...state.placements.values()].filter((p) => p.tags.some((t) => tags.includes(t)));
+  }
+
+  function lowClearancePresent() {
+    for (const p of state.placements.values()) {
+      if (p.tags.includes('low-clearance')) return true;
+    }
+    return false;
   }
 
   // 乘客可达路线：在当前装配几何上做导航网格连通检查
@@ -79,7 +99,7 @@ export function solve(spec) {
       remember(deepest, depth, null, [{ desc: '(封闭)', reasons: [{ code: 'sealed', text: note }] }]);
       return 'fail';
     }
-    const end = ends[0];
+    const end = ends[rng.int(ends.length)];
     let anyTried = false;
     let lastType = null;
     let triedHere = [];
@@ -122,9 +142,25 @@ export function solve(spec) {
         routeNote = routesOk ? '乘客可达路线保持' : '乘客可达路线被切断';
         commit = commit && routesOk;
       }
+      // 封死剪枝：装配中有低通行高度件且目标舱已放置时，若入口/目标区域已无开放端，
+      // 连通性不可能再恢复——立即回溯，不再深入必死子树
+      let sealedNote = '';
+      if (commit && lowClearancePresent() && placedTargets().length > 0) {
+        const sealed = sealedUnreachableTargets(state, spec);
+        if (sealed.length > 0) {
+          commit = false;
+          sealedNote = `目标舱被封死（区域无开放端，连通不可恢复）：${sealed.join('、')}`;
+        }
+      }
       if (!commit) {
         removePlacement(state, placement.uid);
-        if (loops.length > 0) {
+        if (sealedNote) {
+          stats.sealed = (stats.sealed ?? 0) + 1;
+          log.push({
+            kind: 'nav-sealed', uid: placement.uid, type: placement.type, rot: placement.rot, pos: placement.pos,
+            note: `${placement.type}(${placement.uid}) 落位后${sealedNote}，回溯`,
+          });
+        } else if (loops.length > 0) {
           log.push({
             kind: 'loop-reject',
             uid: placement.uid, type: placement.type, rot: placement.rot, pos: placement.pos,
@@ -135,7 +171,7 @@ export function solve(spec) {
         } else {
           log.push({ kind: 'try-fail', type: placement.type, rot: placement.rot, pos: placement.pos, note: `${placement.type} 出口账面不可行（剩余开放端无法归零）` });
         }
-        triedHere.push({ desc, type: placement.type, rot: placement.rot, pos: placement.pos, reasons: [{ code: 'ends', text: '出口账面不可行或乘客路线被切断' }] });
+        triedHere.push({ desc, type: placement.type, rot: placement.rot, pos: placement.pos, reasons: [{ code: sealedNote ? 'nav-sealed' : 'ends', text: sealedNote || '出口账面不可行或乘客路线被切断' }] });
         lastType = placement.type;
         continue;
       }
@@ -170,7 +206,13 @@ export function solve(spec) {
 
     remember(deepest, depth, end, triedHere);
     if (!anyTried && triedHere.length === 0) {
-      const note = `没有剩余模块能对接 ${end.type} 开放端 @${fmtVec(end.center)}`;
+      const endTypes = new Set(ends.map((e) => e.type));
+      const unmatched = Object.keys(state.remaining)
+        .filter((t) => MODULES[t].interfaces.every((i) => !endTypes.has(i.type)));
+      let note = `没有剩余模块能对接 ${end.type} 开放端 @${fmtVec(end.center)}`;
+      if (unmatched.length > 0) {
+        note += `；剩余模块 ${unmatched.join(', ')} 的接口类型（${[...new Set(unmatched.flatMap((t) => MODULES[t].interfaces.map((i) => i.type)))].join('/')}）与当前开放端（${[...endTypes].join('/')}）互不匹配`;
+      }
       log.push({ kind: 'dead-end', note, remaining: { ...state.remaining } });
       remember(deepest, depth, end, [{ desc: '(无候选)', reasons: [{ code: 'no-candidate', text: note }] }]);
     }

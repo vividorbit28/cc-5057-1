@@ -207,8 +207,10 @@ export function checkPlacement(state, def, rot, pos, attachTo = null) {
 }
 
 // 端盖数之外的开放端账面：ends + Σ(d-1) 必须能归零（允许偶数消耗于环路）
+// 另有模块未放置时开放端不得归零——新模块只能经开放端接入，归零即死局
 export function endsFeasible(state, extraEnds, remaining) {
   if (state.spec.allowOpenEnds) return true;
+  if (extraEnds === 0 && Object.keys(remaining).length > 0) return false;
   let potential = extraEnds;
   let hasOdd = false;
   for (const [t, n] of Object.entries(remaining)) {
